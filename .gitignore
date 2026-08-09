@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+.ruff_cache/
+*.py[cod]
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Local/private research material. Publish only reviewed, sanitized derivatives.
+captures/scan-*.json
+downloads/
+firmware/
+*.apk
+*.rar

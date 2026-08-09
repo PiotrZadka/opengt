@@ -1,0 +1,253 @@
+{
+  "advertisement": {
+    "appearance": null,
+    "device_name": "HUAWEI WATCH GT-XXX",
+    "identifier": "REDACTED-COREBLUETOOTH-UUID",
+    "identifier_note": "On macOS this is commonly a CoreBluetooth UUID, not a MAC address.",
+    "local_name": "HUAWEI WATCH GT-XXX",
+    "manufacturer_data": {
+      "637": "01 03 00 ff ff"
+    },
+    "name": "HUAWEI WATCH GT-XXX",
+    "rssi": -47,
+    "seen_at": "2026-08-08T19:22:06.428725Z",
+    "service_data": {
+      "00003802-0000-1000-8000-00805f9b34fb": "xx xx xx xx xx xx"
+    },
+    "service_uuids": [],
+    "tx_power": 4
+  },
+  "captured_at": "2026-08-08T19:22:08.746902Z",
+  "connected": true,
+  "environment": {
+    "architecture": "x86_64",
+    "bleak": "1.1.1",
+    "bluetooth_summary": "Bluetooth:\n\n      Bluetooth Controller:\n          Address: REDACTED\n          State: On\n          Chipset: BCM_4350\n          Discoverable: Off\n          Firmware Version: v134 c5628\n          Supported services: 0x392039 < HFP AVRCP A2DP HID Braille LEA AACP GATT SerialPort >\n          Transport: UART\n          Vendor ID: 0x004C (Apple)\n      Other nearby devices: REDACTED",
+    "macos": "14.8.7",
+    "macos_build": "23J520",
+    "python": "3.9.6 (default, Nov 11 2024, 03:15:39) \n[Clang 16.0.0 (clang-1600.0.26.6)]"
+  },
+  "identifier": "REDACTED-COREBLUETOOTH-UUID",
+  "notification_events": [],
+  "notification_subscriptions": [],
+  "readable_values": [
+    {
+      "handle": 17,
+      "uuid": "00002a29-0000-1000-8000-00805f9b34fb",
+      "value_hex": "48 55 41 57 45 49",
+      "value_utf8": "HUAWEI"
+    },
+    {
+      "handle": 19,
+      "uuid": "00002a23-0000-1000-8000-00805f9b34fb",
+      "value_hex": "01 02 03 04 05 5f 00 00",
+      "value_utf8": null
+    },
+    {
+      "handle": 21,
+      "uuid": "00002a24-0000-1000-8000-00805f9b34fb",
+      "value_hex": "48 55 41 57 45 49",
+      "value_utf8": "HUAWEI"
+    },
+    {
+      "handle": 23,
+      "uuid": "00002a25-0000-1000-8000-00805f9b34fb",
+      "value_hex": "48 55 41 57 45 49",
+      "value_utf8": "HUAWEI"
+    },
+    {
+      "handle": 25,
+      "uuid": "00002a26-0000-1000-8000-00805f9b34fb",
+      "value_hex": "31 2e 30 2e 30 2e 31",
+      "value_utf8": "1.0.0.1"
+    },
+    {
+      "handle": 27,
+      "uuid": "00002a27-0000-1000-8000-00805f9b34fb",
+      "value_hex": "31 2e 30 2e 30 2e 31",
+      "value_utf8": "1.0.0.1"
+    },
+    {
+      "handle": 29,
+      "uuid": "00002a28-0000-1000-8000-00805f9b34fb",
+      "value_hex": "31 2e 30 2e 30 2e 31",
+      "value_utf8": "1.0.0.1"
+    },
+    {
+      "handle": 31,
+      "uuid": "00002a2a-0000-1000-8000-00805f9b34fb",
+      "value_hex": "00 00 00 00 00 00",
+      "value_utf8": null
+    },
+    {
+      "error": "BleakError: Failed to read characteristic 769: Error Domain=CBATTErrorDomain Code=2 \"Reading is not permitted.\" UserInfo={NSLocalizedDescription=Reading is not permitted.}",
+      "handle": 769,
+      "uuid": "00004a02-0000-1000-8000-00805f9b34fb",
+      "value_hex": null,
+      "value_utf8": null
+    }
+  ],
+  "services": [
+    {
+      "characteristics": [
+        {
+          "description": "Manufacturer Name String",
+          "descriptors": [],
+          "handle": 17,
+          "properties": [
+            "read"
+          ],
+          "uuid": "00002a29-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "description": "System ID",
+          "descriptors": [],
+          "handle": 19,
+          "properties": [
+            "read"
+          ],
+          "uuid": "00002a23-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "description": "Model Number String",
+          "descriptors": [],
+          "handle": 21,
+          "properties": [
+            "read"
+          ],
+          "uuid": "00002a24-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "description": "Serial Number String",
+          "descriptors": [],
+          "handle": 23,
+          "properties": [
+            "read"
+          ],
+          "uuid": "00002a25-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "description": "Firmware Revision String",
+          "descriptors": [],
+          "handle": 25,
+          "properties": [
+            "read"
+          ],
+          "uuid": "00002a26-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "description": "Hardware Revision String",
+          "descriptors": [],
+          "handle": 27,
+          "properties": [
+            "read"
+          ],
+          "uuid": "00002a27-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "description": "Software Revision String",
+          "descriptors": [],
+          "handle": 29,
+          "properties": [
+            "read"
+          ],
+          "uuid": "00002a28-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "description": "IEEE 11073-20601 Regulatory Cert. Data List",
+          "descriptors": [],
+          "handle": 31,
+          "properties": [
+            "read"
+          ],
+          "uuid": "00002a2a-0000-1000-8000-00805f9b34fb"
+        }
+      ],
+      "description": "Device Information",
+      "handle": 16,
+      "uuid": "0000180a-0000-1000-8000-00805f9b34fb"
+    },
+    {
+      "characteristics": [
+        {
+          "description": "Vendor specific",
+          "descriptors": [],
+          "handle": 43,
+          "properties": [
+            "write",
+            "write-without-response"
+          ],
+          "uuid": "0000fe01-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "description": "Vendor specific",
+          "descriptors": [
+            {
+              "description": "Client Characteristic Configuration",
+              "handle": 47,
+              "uuid": "00002902-0000-1000-8000-00805f9b34fb"
+            }
+          ],
+          "handle": 45,
+          "properties": [
+            "notify"
+          ],
+          "uuid": "0000fe02-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "description": "Vendor specific",
+          "descriptors": [],
+          "handle": 48,
+          "properties": [
+            "write",
+            "write-without-response"
+          ],
+          "uuid": "0000fe03-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "description": "Vendor specific",
+          "descriptors": [
+            {
+              "description": "Client Characteristic Configuration",
+              "handle": 52,
+              "uuid": "00002902-0000-1000-8000-00805f9b34fb"
+            }
+          ],
+          "handle": 50,
+          "properties": [
+            "notify"
+          ],
+          "uuid": "0000fe04-0000-1000-8000-00805f9b34fb"
+        }
+      ],
+      "description": "HUAWEI Technologies Co.: Ltd.",
+      "handle": 42,
+      "uuid": "0000fe86-0000-1000-8000-00805f9b34fb"
+    },
+    {
+      "characteristics": [
+        {
+          "description": "Vendor specific",
+          "descriptors": [
+            {
+              "description": "Client Characteristic Configuration",
+              "handle": 771,
+              "uuid": "00002902-0000-1000-8000-00805f9b34fb"
+            }
+          ],
+          "handle": 769,
+          "properties": [
+            "notify",
+            "read",
+            "write",
+            "write-without-response"
+          ],
+          "uuid": "00004a02-0000-1000-8000-00805f9b34fb"
+        }
+      ],
+      "description": "Vendor specific",
+      "handle": 768,
+      "uuid": "00003802-0000-1000-8000-00805f9b34fb"
+    }
+  ]
+}
