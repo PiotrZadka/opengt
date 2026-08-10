@@ -13,10 +13,12 @@ OpenGT currently turns a stock-format GT1 watchface into a Codex quota desk comp
 - updates through Gadgetbridge without reinstalling the face, while the local sync process
   is running.
 
-![OpenGT running on FTN-B19](watchfaces/OpenGT/preview/on-watch.jpg)
+## Showcase
 
-_Physical OpenGT 0.8.0 validation photo. The current build additionally corrects the
-measured text baselines and adds numeric battery percentage._
+![OpenGT 0.8.1 running on FTN-B19](watchfaces/OpenGT/preview/on-watch.jpg)
+
+_OpenGT 0.8.1 running on the physical FTN-B19 with live Codex quota, reset countdown,
+and native battery level._
 
 ## Current status
 
