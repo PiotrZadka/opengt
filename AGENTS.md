@@ -55,9 +55,9 @@ failure and recovery behavior.
 
 ## How to use this index
 
-Read **only** the file(s) matching your task, not the whole repo. The docs/research
-files are the current truth; `captures/` are raw evidence; `src/`+`scripts/` are frozen
-research tooling.
+Read **only** the file(s) matching your task, not the whole repo. Research files record
+evidence; `captures/` hold raw observations; the OpenGT builder/synchronizer are active
+prototype code; the LPv2 codec and BLE observer remain frozen research tooling.
 
 ## File map
 
@@ -65,23 +65,26 @@ research tooling.
 | --- | --- | --- |
 | `research/ftn-b19-custom-firmware-gap-analysis.md` | Master report: hardware, security, boot chain, all gaps (#1–#18), evidence labels, source register | Any firmware/security/hardware question — start here |
 | `research/ftn-b19-firmware-sources-and-ota-server.md` | Firmware package inventory (mirrors, 4 known FTN-B19 files), Huawei Health OTA server flow (endpoint `query.hicloud.com/accessory/v2/checkEx.action`, request/response JSON, product UUID map), `.bin.apk` container format, new hardware evidence, open leads | Any task about firmware packages, OTA server, file formats, or "where to find X" |
-| `research/software-only-roadmap.md` | Open phone companion, optional external data, stock display paths, live-display limits, native-app stretch goal | Any task about what to build next or how user-defined data reaches the watch |
+| `research/codex-watchface-feasibility.md` | GT1 stock watchface install/data-binding gate, same-face dynamic-value proof, exact Codex quota source | Any task about showing Codex quota on GT1 or changing custom-watchface data without reinstalling |
+| `src/opengt_watchface/builder.py` | Reproducible GT1 resource, protobuf payload, preview, BIN, and HWT builder | Changing the OpenGT layout, bindings, or package |
+| `scripts/opengt-sync` | Codex app-server quota reader and reviewed Gadgetbridge weather broadcast | Changing or running quota synchronization |
+| `watchfaces/OpenGT/` | Current source assets, minimal seed payload, generated preview, BIN, and HWT | Installing or inspecting the OpenGT watchface |
 | `research/huawei-uuid-protocol.md` | UUID inventory: FE86/FE01/FE02/FE03/FE04/3802/4A02 vs Gadgetbridge and `zyv`/`psolyca` huawei-lpv2 sources | BLE protocol/GATT work, UUID questions |
 | `docs/hardware-and-ble-baseline.md` | Environment (macOS/Bleak), observed advertisement, GATT map with handles, what was/wasn't read | BLE capture/observation tasks, device identity questions |
 | `docs/lpv2-codec.md` | LPv2 framing/TLV/slicing field map, public test vector | Codec work, decoding captured frames |
-| `docs/README.md` | How to run the observer script | Running/using the scripts |
 | `src/huawei_lpv2/codec.py` | LPv2 framing/TLV/slicing codec (frozen research tooling; no auth/crypto by design) | Codec implementation questions |
 | `scripts/ble_observe.py` | Read-only scanner + GATT observer (macOS CoreBluetooth via bleak) | Passive work touching the live watch |
 | `tests/test_lpv2_codec.py` | Offline codec tests incl. public test frame | After any codec change |
-| `captures/scan-*.json`, `gatt-*.json` | Raw BLE advertisement + GATT observations (2026-08-08) | Corroborating observations; treat as evidence, not truth |
-| `pyproject.toml`, `requirements.txt`, `pyrightconfig.json` | Python 3.9 / bleak 1.1.1 / ruff config | Environment setup |
+| `tests/test_opengt_watchface.py` | Ring geometry, GT1 binding, payload, and HWT regression tests | After any OpenGT builder or binding change |
+| `captures/gatt-*.json`, `captures/physical-validation-*/` | Reviewed GATT and live watchface/weather observations | Corroborating observations; treat as evidence, not truth |
+| `pyproject.toml`, `requirements.txt`, `pyrightconfig.json` | Python 3.9 / bleak / Pillow / ruff configuration | Environment setup |
 
 ## Task → starting file
 
 | Task | Start with | Then |
 | --- | --- | --- |
 | "Is there a custom firmware / RCE / bootloader path?" | `research/ftn-b19-custom-firmware-gap-analysis.md` (gaps #7–#13, Direct answers A–E) | Apply the software-only and no-opening boundary above |
-| "Display custom telemetry without firmware" | `research/software-only-roadmap.md` | Then `research/huawei-uuid-protocol.md` + Gadgetbridge Huawei notification/weather/watchface sources |
+| "Display Codex quota without firmware" | `research/codex-watchface-feasibility.md` | Then `src/opengt_watchface/builder.py` + `scripts/opengt-sync` |
 | "Find firmware / OTA packages / filelist.xml" | `research/ftn-b19-firmware-sources-and-ota-server.md` §1, §3, §6 | kurdishfirmware links, XDA leads |
 | "How does the OTA update work server-side?" | `research/ftn-b19-firmware-sources-and-ota-server.md` §2 | APK at `/tmp/health_16.1.5.320.apk` (SHA-256 `fe5a89bc…518bb`) |
 | "Decode captured BLE frames / LPv2" | `docs/lpv2-codec.md` + `src/huawei_lpv2/codec.py` | `tests/test_lpv2_codec.py` |
@@ -92,15 +95,17 @@ research tooling.
 ## Commands
 
 ```sh
-PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -v   # codec tests
-PYTHONPATH=src .venv/bin/python scripts/ble_observe.py --scan-seconds 20            # scan only
-PYTHONPATH=src .venv/bin/python scripts/ble_observe.py --scan-seconds 30 --connect  # read-only GATT
+PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -v
+PYTHONPATH=src .venv/bin/python scripts/build_opengt_watchface.py
+./scripts/opengt-sync
+PYTHONPATH=src .venv/bin/python scripts/ble_observe.py --scan-seconds 20
+PYTHONPATH=src .venv/bin/python scripts/ble_observe.py --scan-seconds 30 --connect
 ```
 
-Environment: macOS 14.8.7, Python 3.9.6, bleak 1.1.1. The existing codec and observer
-remain **frozen read-only research tooling**. Build active, reviewed stock-operation work
-as a clearly separate tool/module; do not silently add writes to `ble_observe.py` or turn
-the codec into a generic arbitrary-payload sender.
+Observer baseline: macOS 14.8.7, Python 3.9.6, bleak 1.1.1. OpenGT synchronization
+was validated from CachyOS through ADB and Gadgetbridge 0.92.2. The codec and observer
+remain **frozen read-only research tooling**. Keep active stock operations in the separate
+OpenGT modules; preserve the observer as read-only and the codec as transport-only.
 
 ## External references (pinned)
 

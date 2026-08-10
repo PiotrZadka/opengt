@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<HwTheme>
+    <title>OpenGT</title>
+    <title-cn>OpenGT</title-cn>
+    <author>OpenGT</author>
+    <designer>OpenGT</designer>
+    <screen>HWHD02</screen>
+    <version>0.7.2</version>
+    <font>Default</font>
+    <font-cn>Default</font-cn>
+    <briefinfo>Codex tactical desk companion</briefinfo>
+</HwTheme>

@@ -1,0 +1,21 @@
+08-10 09:49:07.507 I/adbd    (27135): adbd service requested 'shell,v2,TERM=xterm-256color,raw:am broadcast -a nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER --es WeatherJson '{"timestamp":1786351746,"location":"OpenGT test","currentTemp":315,"todayMinTemp":315,"todayMaxTemp":315,"currentCondition":"clear","currentConditionCode":800,"currentHumidity":50,"windSpeed":0,"windDirection":0}' nodomain.freeyourgadget.gadgetbridge'
+08-10 09:49:07.593 I/ActivityManager(10987): Broadcasting: Intent { act=nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER flg=0x400000 pkg=nodomain.freeyourgadget.gadgetbridge (has extras) }
+08-10 09:49:07.596 I/ActivityManager(10987): Enqueued broadcast Intent { act=nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER flg=0x400000 pkg=nodomain.freeyourgadget.gadgetbridge (has extras) }: 0
+08-10 09:49:07.600 D/nodomain.freeyourgadget.gadgetbridge.externalevents.GenericWeatherReceiver(11073): use extra WeatherJson
+08-10 09:49:07.600 I/nodomain.freeyourgadget.gadgetbridge.externalevents.GenericWeatherReceiver(11073): Got generic weather for 1 locations
+08-10 09:49:07.602 D/nodomain.freeyourgadget.gadgetbridge.service.DeviceCommunicationService(11073): Service startcommand: nodomain.freeyourgadget.gadgetbridge.devices.action.send_weather
+08-10 09:49:07.603 W/nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.HuaweiWeatherManager(11073): Sun rise for today out of bounds: Thu Jan 01 01:00:00 GMT 1970
+08-10 09:49:07.603 W/nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.HuaweiWeatherManager(11073): Sun set for today out of bounds: Thu Jan 01 01:00:00 GMT 1970
+08-10 09:49:07.603 W/nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.HuaweiWeatherManager(11073): Moon rise for today out of bounds: Thu Jan 01 01:00:00 GMT 1970
+08-10 09:49:07.603 W/nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.HuaweiWeatherManager(11073): Moon set for today out of bounds: Thu Jan 01 01:00:00 GMT 1970
+08-10 09:49:07.603 D/nodomain.freeyourgadget.gadgetbridge.service.btle.BtLEQueue(0)(11073): add: 09:49:07 Transaction with 2 actions for SendWeatherStartRequest
+08-10 09:49:07.606 I/nodomain.freeyourgadget.gadgetbridge.model.weather.WeatherCacheManager(11073): Saved weather specs to cache: /data/user/0/nodomain.freeyourgadget.gadgetbridge/cache/weatherCache.bin
+08-10 09:49:07.792 D/nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.ResponseManager(11073): Service: f, command: 9, handled by: class nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.requests.SendWeatherStartRequest
+08-10 09:49:07.793 D/nodomain.freeyourgadget.gadgetbridge.service.btle.BtLEQueue(0)(11073): add: 09:49:07 Transaction with 2 actions for SendWeatherUnitRequest
+08-10 09:49:07.913 D/nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.ResponseManager(11073): Service: f, command: 5, handled by: class nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.requests.SendWeatherUnitRequest
+08-10 09:49:07.914 D/nodomain.freeyourgadget.gadgetbridge.service.btle.BtLEQueue(0)(11073): add: 09:49:07 Transaction with 2 actions for SendWeatherSupportRequest
+08-10 09:49:08.033 D/nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.ResponseManager(11073): Service: f, command: 2, handled by: class nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.requests.SendWeatherSupportRequest
+08-10 09:49:08.033 D/nodomain.freeyourgadget.gadgetbridge.service.btle.BtLEQueue(0)(11073): add: 09:49:07 Transaction with 2 actions for SendWeatherExtendedSupportRequest
+08-10 09:49:08.150 D/nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.ResponseManager(11073): Service: f, command: 6, handled by: class nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.requests.SendWeatherExtendedSupportRequest
+08-10 09:49:08.151 D/nodomain.freeyourgadget.gadgetbridge.service.btle.BtLEQueue(0)(11073): add: 09:49:07 Transaction with 2 actions for SendWeatherCurrentRequest
+08-10 09:49:08.272 D/nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.ResponseManager(11073): Service: f, command: 1, handled by: class nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.requests.SendWeatherCurrentRequest

@@ -1,0 +1,325 @@
+#!/usr/bin/env python3
+"""Sync the authenticated Codex weekly quota to the OpenGT watchface."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import os
+import select
+import shutil
+import subprocess
+import sys
+import time
+from datetime import datetime
+from typing import Any, Optional, Tuple
+
+CODEX_TIMEOUT_SECONDS = 20
+WEEKLY_WINDOW_MINUTES = 7 * 24 * 60
+GADGETBRIDGE_PACKAGE = "nodomain.freeyourgadget.gadgetbridge"
+WEATHER_ACTION = f"{GADGETBRIDGE_PACKAGE}.ACTION_GENERIC_WEATHER"
+ADB_SERIAL_FILE = os.path.expanduser("~/.config/opengt/adb-serial")
+
+
+class SyncError(Exception):
+    """An expected sync failure with a user-facing message."""
+
+
+def require_command(name: str) -> str:
+    path = shutil.which(name)
+    if path is None:
+        raise SyncError(f"required command not found: {name}")
+    return path
+
+
+def read_message(process: subprocess.Popen[str], deadline: float) -> dict[str, Any]:
+    assert process.stdout is not None
+    assert process.stderr is not None
+
+    while True:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise SyncError("Codex app-server did not respond in time")
+        ready, _, _ = select.select(
+            [process.stdout, process.stderr], [], [], remaining
+        )
+        if not ready:
+            raise SyncError("Codex app-server did not respond in time")
+        for stream in ready:
+            line = stream.readline()
+            if not line:
+                continue
+            if stream is process.stderr:
+                continue
+            try:
+                message = json.loads(line)
+            except json.JSONDecodeError as error:
+                raise SyncError("Codex app-server returned invalid JSON") from error
+            if isinstance(message, dict):
+                return message
+
+
+def send_message(process: subprocess.Popen[str], message: dict[str, Any]) -> None:
+    assert process.stdin is not None
+    process.stdin.write(json.dumps(message, separators=(",", ":")) + "\n")
+    process.stdin.flush()
+
+
+def await_response(
+    process: subprocess.Popen[str], request_id: int, deadline: float
+) -> dict[str, Any]:
+    while True:
+        message = read_message(process, deadline)
+        if message.get("id") != request_id:
+            continue
+        error = message.get("error")
+        if error is not None:
+            detail = error.get("message") if isinstance(error, dict) else str(error)
+            raise SyncError(f"Codex app-server request failed: {detail}")
+        result = message.get("result")
+        if not isinstance(result, dict):
+            raise SyncError("Codex app-server response has no result")
+        return result
+
+
+def read_rate_limits() -> dict[str, Any]:
+    codex = require_command("codex")
+    process = subprocess.Popen(
+        [codex, "app-server", "--stdio"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        bufsize=1,
+    )
+    deadline = time.monotonic() + CODEX_TIMEOUT_SECONDS
+    try:
+        send_message(
+            process,
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "clientInfo": {"name": "opengt", "version": "0.1.0"},
+                    "capabilities": {"experimentalApi": True},
+                },
+            },
+        )
+        await_response(process, 1, deadline)
+        send_message(
+            process,
+            {"jsonrpc": "2.0", "method": "initialized", "params": {}},
+        )
+        send_message(
+            process,
+            {
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "account/rateLimits/read",
+                "params": {},
+            },
+        )
+        return await_response(process, 2, deadline)
+    except (BrokenPipeError, OSError) as error:
+        raise SyncError(f"could not communicate with Codex app-server: {error}") from error
+    finally:
+        process.terminate()
+        try:
+            process.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+
+
+def weekly_window(result: dict[str, Any]) -> dict[str, Any]:
+    buckets = result.get("rateLimitsByLimitId")
+    candidates: list[dict[str, Any]] = []
+
+    if isinstance(buckets, dict):
+        for bucket_key, bucket in buckets.items():
+            if not isinstance(bucket, dict):
+                continue
+            if bucket_key != "codex" and bucket.get("limitId") != "codex":
+                continue
+            for name in ("primary", "secondary"):
+                window = bucket.get(name)
+                if (
+                    isinstance(window, dict)
+                    and window.get("windowDurationMins") == WEEKLY_WINDOW_MINUTES
+                ):
+                    candidates.append(window)
+    else:
+        bucket = result.get("rateLimits")
+        if isinstance(bucket, dict) and bucket.get("limitId") == "codex":
+            for name in ("primary", "secondary"):
+                window = bucket.get(name)
+                if (
+                    isinstance(window, dict)
+                    and window.get("windowDurationMins") == WEEKLY_WINDOW_MINUTES
+                ):
+                    candidates.append(window)
+
+    if len(candidates) != 1:
+        raise SyncError(
+            "could not uniquely identify the Codex weekly rate-limit window "
+            f"(found {len(candidates)} exact 7-day windows)"
+        )
+    return candidates[0]
+
+
+def quota_values(window: dict[str, Any]) -> tuple[int, int, int]:
+    used_percent = window.get("usedPercent")
+    resets_at = window.get("resetsAt")
+    if isinstance(used_percent, bool) or not isinstance(used_percent, int):
+        raise SyncError("Codex weekly window has no valid usedPercent")
+    if isinstance(resets_at, bool) or not isinstance(resets_at, int):
+        raise SyncError("Codex weekly window has no valid resetsAt")
+
+    remaining_percent = max(0, min(100, 100 - used_percent))
+    seconds_remaining = resets_at - int(time.time())
+    reset_days = 0 if seconds_remaining <= 0 else math.ceil(seconds_remaining / 86400)
+    return remaining_percent, resets_at, reset_days
+
+
+def adb(arguments: list[str], *, check: bool = True) -> subprocess.CompletedProcess[str]:
+    adb_path = require_command("adb")
+    try:
+        return subprocess.run(
+            [adb_path, *arguments],
+            check=check,
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise SyncError("ADB command timed out") from error
+    except subprocess.CalledProcessError as error:
+        detail = (error.stderr or error.stdout).strip()
+        raise SyncError(f"ADB command failed: {detail or error.returncode}") from error
+
+
+def select_adb_device() -> None:
+    if os.environ.get("ANDROID_SERIAL"):
+        return
+    try:
+        with open(ADB_SERIAL_FILE, encoding="utf-8") as serial_file:
+            serial = serial_file.read().strip()
+    except FileNotFoundError:
+        return
+    except OSError as error:
+        raise SyncError(f"could not read {ADB_SERIAL_FILE}: {error}") from error
+    if not serial or any(character.isspace() for character in serial):
+        raise SyncError(f"invalid ADB device in {ADB_SERIAL_FILE}")
+    os.environ["ANDROID_SERIAL"] = serial
+
+
+def verify_android() -> None:
+    select_adb_device()
+    state = adb(["get-state"], check=False)
+    if state.returncode != 0 or state.stdout.strip() != "device":
+        detail = (state.stderr or state.stdout).strip()
+        raise SyncError(f"ADB device is unavailable{': ' + detail if detail else ''}")
+
+    package = adb(["shell", "pm", "path", GADGETBRIDGE_PACKAGE], check=False)
+    if package.returncode != 0 or "package:" not in package.stdout:
+        raise SyncError("Gadgetbridge is not installed or reachable through ADB")
+
+
+def send_weather(remaining_percent: int, reset_days: int) -> None:
+    # Current temperature selects a quota-ring decile. Maximum carries the exact
+    # percentage for text, while minimum carries reset days.
+    ring_state = (remaining_percent + 5) // 10
+    weather = {
+        "timestamp": int(time.time()),
+        "location": "OpenGT",
+        "currentTemp": ring_state + 273,
+        "todayMinTemp": reset_days + 273,
+        "todayMaxTemp": remaining_percent + 273,
+        "currentCondition": "clear",
+        "currentConditionCode": 800,
+        "currentHumidity": 50,
+        "airQuality": {"aqi": remaining_percent},
+        "windSpeed": 0,
+        "windDirection": 0,
+    }
+    result = adb(
+        [
+            "shell",
+            "am",
+            "broadcast",
+            "-a",
+            WEATHER_ACTION,
+            "--es",
+            "WeatherJson",
+            "'" + json.dumps(weather, separators=(",", ":")) + "'",
+            GADGETBRIDGE_PACKAGE,
+        ]
+    )
+    output = result.stdout + result.stderr
+    if "Broadcast completed: result=0" not in output:
+        raise SyncError("Gadgetbridge did not accept the weather broadcast")
+
+
+def sync_once(
+    previous: Optional[Tuple[int, int, int]] = None,
+) -> Tuple[int, int, int]:
+    window = weekly_window(read_rate_limits())
+    values = quota_values(window)
+    remaining_percent, resets_at, reset_days = values
+    if values == previous:
+        return values
+
+    reset_time = datetime.fromtimestamp(resets_at).astimezone().isoformat(
+        sep=" ", timespec="seconds"
+    )
+    print(f"Codex: {remaining_percent}% left", flush=True)
+    print(f"Reset: {reset_time} ({reset_days} days on watch)", flush=True)
+    verify_android()
+    send_weather(remaining_percent, reset_days)
+    print("Watch: updated successfully", flush=True)
+    return values
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="keep quota synchronized while this process is running",
+    )
+    parser.add_argument(
+        "--interval",
+        type=int,
+        default=30,
+        metavar="SECONDS",
+        help="poll interval for --watch (default: 30)",
+    )
+    arguments = parser.parse_args()
+    if arguments.interval < 10:
+        parser.error("--interval must be at least 10 seconds")
+
+    if not arguments.watch:
+        try:
+            sync_once()
+            return 0
+        except SyncError as error:
+            print(f"OpenGT sync failed: {error}", file=sys.stderr)
+            return 1
+
+    print(f"OpenGT live sync: every {arguments.interval} seconds", flush=True)
+    previous = None
+    try:
+        while True:
+            try:
+                previous = sync_once(previous)
+            except SyncError as error:
+                print(f"OpenGT sync failed: {error}", file=sys.stderr, flush=True)
+            time.sleep(arguments.interval)
+    except KeyboardInterrupt:
+        return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
