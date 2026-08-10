@@ -109,11 +109,11 @@ def compiled_quota_selected_data_type(path: Path) -> int:
     raise AssertionError("compiled quota selected-image widget was not found")
 
 
-def compiled_text_data_types(path: Path) -> dict[int, int]:
+def compiled_text_properties(path: Path) -> dict[int, tuple[int, int, int, int]]:
     payload = path.read_bytes()
     protobuf_size = struct.unpack_from("<H", payload, 2)[0]
     protobuf = payload[16 : 16 + protobuf_size]
-    result: dict[int, int] = {}
+    result: dict[int, tuple[int, int, int, int]] = {}
     for field_number, wire_type, value in protobuf_fields(protobuf):
         if field_number != 1 or wire_type != 2 or not isinstance(value, bytes):
             continue
@@ -136,8 +136,14 @@ def compiled_text_data_types(path: Path) -> dict[int, int]:
             for field, wire, item in protobuf_fields(text)
             if wire == 0 and isinstance(item, int)
         }
-        if integers.get(1) in (163, 215):
-            result[integers[1]] = integers[8]
+        data_type = integers.get(8)
+        if data_type in (builder.DATA_TEMPERATURE_MAX, builder.DATA_TEMPERATURE_MIN):
+            result[data_type] = (
+                integers[1],
+                integers[2],
+                integers[3],
+                integers[4],
+            )
     return result
 
 
@@ -204,10 +210,10 @@ class OpenGTWatchfaceTests(unittest.TestCase):
         )
         self.assertEqual(
             {
-                163: builder.DATA_TEMPERATURE_MAX,
-                215: builder.DATA_TEMPERATURE_MIN,
+                builder.DATA_TEMPERATURE_MAX: (190, 209, 84, 60),
+                builder.DATA_TEMPERATURE_MIN: (219, 284, 40, 28),
             },
-            compiled_text_data_types(binary),
+            compiled_text_properties(binary),
         )
         self.assertEqual(20, builder.DATA_TEMPERATURE_MAX)
         self.assertEqual(21, builder.DATA_TEMPERATURE_MIN)

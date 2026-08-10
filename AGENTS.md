@@ -68,7 +68,7 @@ prototype code; the LPv2 codec and BLE observer remain frozen research tooling.
 | `research/codex-watchface-feasibility.md` | GT1 stock watchface install/data-binding gate, same-face dynamic-value proof, exact Codex quota source | Any task about showing Codex quota on GT1 or changing custom-watchface data without reinstalling |
 | `src/opengt_watchface/builder.py` | Reproducible GT1 resource, protobuf payload, preview, BIN, and HWT builder | Changing the OpenGT layout, bindings, or package |
 | `scripts/opengt-sync` | Codex app-server quota reader and reviewed Gadgetbridge weather broadcast | Changing or running quota synchronization |
-| `watchfaces/OpenGT/` | Current source assets, minimal seed payload, generated preview, BIN, and HWT | Installing or inspecting the OpenGT watchface |
+| `watchfaces/OpenGT/` | Minimal seed payload, generated resources, preview, BIN, and HWT | Installing or inspecting the OpenGT watchface |
 | `research/huawei-uuid-protocol.md` | UUID inventory: FE86/FE01/FE02/FE03/FE04/3802/4A02 vs Gadgetbridge and `zyv`/`psolyca` huawei-lpv2 sources | BLE protocol/GATT work, UUID questions |
 | `docs/hardware-and-ble-baseline.md` | Environment (macOS/Bleak), observed advertisement, GATT map with handles, what was/wasn't read | BLE capture/observation tasks, device identity questions |
 | `docs/lpv2-codec.md` | LPv2 framing/TLV/slicing field map, public test vector | Codec work, decoding captured frames |

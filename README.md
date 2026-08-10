@@ -10,7 +10,8 @@ OpenGT currently turns a stock-format GT1 watchface into a Codex quota desk comp
 - reset countdown in days;
 - a native, thin battery ring;
 - current time;
-- automatic updates through Gadgetbridge without reinstalling the face.
+- updates through Gadgetbridge without reinstalling the face, while the local sync process
+  is running.
 
 ![OpenGT watchface preview](watchfaces/OpenGT/preview/cover.jpg)
 
@@ -31,7 +32,7 @@ OpenGT.hwt on FTN-B19
 ```
 
 Gadgetbridge 0.92.2 pairs with the watch, installs and activates the custom HWT, and
-updates its bound fields without another watchface upload. The current build is **0.7.2**.
+updates its bound fields without another watchface upload. The current build is **0.8.0**.
 
 The GT1 renderer has no custom variable API. OpenGT deliberately reuses three stock
 weather values:
@@ -46,67 +47,146 @@ The quota ring is therefore quantized to the nearest 10%, while the numeric perc
 exact. The battery ring uses the watch's native battery ratio and does not depend on the
 phone. This prototype replaces genuine weather values while active.
 
-## Install
+## Runtime model and limitations
 
-Requirements:
+**The current MVP is local and computer-assisted.** It is not a standalone watch app,
+phone-only companion, or hosted service.
 
-- Python 3.9+;
-- an authenticated `codex` CLI using ChatGPT/Codex credentials;
+| Component | Must remain available for quota refreshes? |
+| --- | --- |
+| Computer | Yes: runs `codex` and `scripts/opengt-sync` |
+| Internet on the computer | Yes: reads the authenticated Codex quota |
+| ADB connection from computer to phone | Yes: USB or reachable wireless ADB |
+| Gadgetbridge on the phone | Yes: receives the local broadcast and talks to the watch |
+| Bluetooth connection from phone to watch | Yes: delivers the update |
+
+The computer does **not** need to stay on for the watchface, clock, or battery ring to
+work. When the computer or either connection is unavailable, the watch keeps showing the
+last synchronized quota and reset values, which become stale. For automatic current
+values, the computer must stay awake with the sync process running. OpenGT does not yet
+include an Android companion, remote server, startup service, or cloud relay.
+
+## Reproduce the MVP
+
+### Requirements
+
+The validated setup used the following. Other versions may work, but are not yet part of
+the tested path.
+
+- HUAWEI WATCH GT **FTN-B19**;
+- Android phone with Bluetooth and USB or wireless debugging available;
+- [Gadgetbridge](https://gadgetbridge.org/) **0.92.2**, paired with and currently connected
+  to the watch;
+- Linux computer (CachyOS was used for the end-to-end synchronization);
+- Python 3.9 or newer;
+- DejaVu Sans Condensed Bold at
+  `/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf` (`ttf-dejavu` on
+  Arch/CachyOS or `fonts-dejavu-core` on Debian/Ubuntu);
 - Android Debug Bridge (`adb`);
-- Gadgetbridge paired and connected to the watch.
+- [Codex CLI](https://developers.openai.com/codex/cli) authenticated with a ChatGPT account
+  that has Codex access;
+- internet access on the computer.
+
+The synchronization path has not been packaged for Windows, macOS, iOS, or Huawei Health.
+The passive BLE observer is separate and was validated on macOS.
+
+### 1. Prepare the repository and tools
+
+Install `codex` and `adb` using their official instructions or your operating system's
+package manager, authenticate Codex, and then clone OpenGT:
 
 ```sh
+git clone https://github.com/PiotrZadka/opengt.git
+cd opengt
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
+
+codex --version
+adb version
 ```
 
-Build the watchface:
+Opening `codex` should show an authenticated session before continuing. OpenGT invokes the
+local authenticated app-server; it never reads or copies the credential file.
+
+### 2. Pair the watch in Gadgetbridge
+
+Pair FTN-B19 from Gadgetbridge and wait until its device page reports **Connected**. The
+phone must maintain this Bluetooth connection whenever a quota update is sent.
+
+### 3. Connect the phone through ADB
+
+Enable Android developer options and USB debugging, connect the phone, accept its debugging
+prompt, and verify that exactly one usable device is listed:
+
+```sh
+adb devices
+```
+
+If several devices are listed, select one for each sync command:
+
+```sh
+ANDROID_SERIAL=<adb-serial> ./scripts/opengt-sync
+```
+
+For optional wireless ADB, first enable or pair it according to the phone's Android
+version, then store its reported endpoint:
+
+```sh
+adb connect <phone-ip>:<adb-port>
+mkdir -p ~/.config/opengt
+printf '%s\n' '<phone-ip>:<adb-port>' > ~/.config/opengt/adb-serial
+```
+
+Wireless debugging can turn off or change ports after a phone restart; reconnect it before
+running OpenGT again.
+
+### 4. Build and install the watchface
 
 ```sh
 PYTHONPATH=src .venv/bin/python scripts/build_opengt_watchface.py
+adb push watchfaces/OpenGT/export/OpenGT.hwt /sdcard/Download/OpenGT.hwt
 ```
 
-The stable outputs are:
+On the phone, open `OpenGT.hwt` with Gadgetbridge's FW/App installer. Confirm that it is
+identified as an `HWHD02` 454×454 watchface, install it, and select it on the watch. The
+stable local outputs are:
 
 ```text
 watchfaces/OpenGT/export/OpenGT.bin
 watchfaces/OpenGT/export/OpenGT.hwt
 ```
 
-Copy `OpenGT.hwt` to the phone, open it with Gadgetbridge's FW/App installer, verify that
-it is identified as an `HWHD02` 454×454 watchface, and install it.
-
 The builder starts from `watchfaces/OpenGT/base/OpenGT_0.1.0.bin`, a minimal GT1 payload
 previously exported by Huawei WatchFace Designer. Subsequent layout, resources, bindings,
 and packaging are generated locally by `src/opengt_watchface/builder.py`.
 
-## Synchronize Codex quota
+### 5. Verify one quota update
 
-For a USB-connected phone, set `ANDROID_SERIAL` when more than one ADB device is present:
-
-```sh
-ANDROID_SERIAL=<adb-serial> ./scripts/opengt-sync
-```
-
-For wireless ADB, store the selected endpoint once:
+With Codex authenticated, ADB connected, Gadgetbridge running, and the watch connected:
 
 ```sh
-mkdir -p ~/.config/opengt
-printf '%s\n' '<phone-ip>:5555' > ~/.config/opengt/adb-serial
-adb connect "$(cat ~/.config/opengt/adb-serial)"
 ./scripts/opengt-sync
 ```
 
-Continuous foreground synchronization is also available:
+A successful run prints the remaining quota, reset time, and `Watch: updated successfully`.
+The watch can take a short time to redraw the new values.
+
+### 6. Keep quota synchronized
+
+Run the foreground poller every five minutes:
 
 ```sh
 ./scripts/opengt-sync --watch --interval 300
 ```
 
+Keep that terminal, the computer, ADB, Gadgetbridge, and the phone-to-watch Bluetooth link
+available. Stopping the process stops future quota refreshes; it does not remove or break
+the watchface. No startup/background service is installed by this repository.
+
 The synchronizer reads the authenticated Codex app-server RPC
 `account/rateLimits/read`, selects the exact seven-day Codex window, and sends only the
-three documented weather values through Gadgetbridge. It does not read or copy Codex
-authentication tokens and does not expose arbitrary BLE writes.
+three documented weather values through Gadgetbridge. It does not expose arbitrary BLE
+writes.
 
 ## Passive BLE tooling
 
@@ -134,7 +214,7 @@ and HWT structure.
 
 ## Repository map
 
-- `watchfaces/OpenGT/` — source assets, GT1 payload seed, previews, and current build.
+- `watchfaces/OpenGT/` — GT1 payload seed, generated resources, previews, and current build.
 - `src/opengt_watchface/` — reproducible OpenGT watchface builder.
 - `scripts/opengt-sync` — Codex-to-Gadgetbridge synchronization.
 - `src/huawei_lpv2/` — offline LPv2 framing/TLV/slicing codec.
