@@ -11,27 +11,30 @@
         <Widget widget_type="CIRCLE">
             <Circle res_name="A100_023.png" data_type="DATA_POWER_RATIO" label="Battery progress" drawable_x="0" drawable_y="0" drawable_width="454" drawable_height="454" circle_x="227" circle_y="227" circle_r="192" circle_width="7" begin_arc="0" end_arc="360" type="static"/>
         </Widget>
+        <Widget widget_type="TEXT">
+            <Text data_type="DATA_POWER" drawable_width="36" color_blue="18" color_red="255" font_type="F_ROBOTOCONDENSED_REGULAR_20" label="Battery percentage" alignment_type="RIGHT" alpha="255" drawable_height="20" drawable_x="239" type="static" color_green="105" drawable_y="340" line_spacing="0"/>
+        </Widget>
         <Widget widget_type="SELECTIMAGE">
-            <SelectImage data_type="DATA_HOUR_HIGH" label="Hour high" drawable_x="111" type="static" drawable_y="104"/>
+            <SelectImage data_type="DATA_HOUR_HIGH" label="Hour high" drawable_x="107" type="static" drawable_y="104"/>
             <ImagesList res_0="A100_001.png" res_1="A100_002.png" res_2="A100_003.png" res_3="A100_004.png" res_4="A100_005.png" res_5="A100_006.png" res_6="A100_007.png" res_7="A100_008.png" res_8="A100_009.png" res_9="A100_010.png" res_10="" res_11="" res_12="" res_13="" res_14=""/>
         </Widget>
         <Widget widget_type="SELECTIMAGE">
-            <SelectImage data_type="DATA_HOUR_LOW" label="Hour low" drawable_x="165" type="static" drawable_y="104"/>
+            <SelectImage data_type="DATA_HOUR_LOW" label="Hour low" drawable_x="161" type="static" drawable_y="104"/>
             <ImagesList res_0="A100_001.png" res_1="A100_002.png" res_2="A100_003.png" res_3="A100_004.png" res_4="A100_005.png" res_5="A100_006.png" res_6="A100_007.png" res_7="A100_008.png" res_8="A100_009.png" res_9="A100_010.png" res_10="" res_11="" res_12="" res_13="" res_14=""/>
         </Widget>
         <Widget widget_type="SELECTIMAGE">
-            <SelectImage data_type="DATA_MINITE_HIGH" label="Minute high" drawable_x="243" type="static" drawable_y="104"/>
+            <SelectImage data_type="DATA_MINITE_HIGH" label="Minute high" drawable_x="239" type="static" drawable_y="104"/>
             <ImagesList res_0="A100_001.png" res_1="A100_002.png" res_2="A100_003.png" res_3="A100_004.png" res_4="A100_005.png" res_5="A100_006.png" res_6="A100_007.png" res_7="A100_008.png" res_8="A100_009.png" res_9="A100_010.png" res_10="" res_11="" res_12="" res_13="" res_14=""/>
         </Widget>
         <Widget widget_type="SELECTIMAGE">
-            <SelectImage data_type="DATA_MINITE_LOW" label="Minute low" drawable_x="297" type="static" drawable_y="104"/>
+            <SelectImage data_type="DATA_MINITE_LOW" label="Minute low" drawable_x="293" type="static" drawable_y="104"/>
             <ImagesList res_0="A100_001.png" res_1="A100_002.png" res_2="A100_003.png" res_3="A100_004.png" res_4="A100_005.png" res_5="A100_006.png" res_6="A100_007.png" res_7="A100_008.png" res_8="A100_009.png" res_9="A100_010.png" res_10="" res_11="" res_12="" res_13="" res_14=""/>
         </Widget>
         <Widget widget_type="TEXT">
-            <Text data_type="DATA_TEMPERATURE_MAX" drawable_width="105" color_blue="18" color_red="255" font_type="F_ROBOTOCONDENSED_REGULAR_38" label="Quota remaining" alignment_type="CENTER" alpha="255" drawable_height="60" drawable_x="163" type="static" color_green="105" drawable_y="230" line_spacing="0"/>
+            <Text data_type="DATA_TEMPERATURE_MAX" drawable_width="84" color_blue="18" color_red="255" font_type="F_ROBOTOCONDENSED_REGULAR_38" label="Quota remaining" alignment_type="CENTER" alpha="255" drawable_height="60" drawable_x="180" type="static" color_green="105" drawable_y="185" line_spacing="0"/>
         </Widget>
         <Widget widget_type="TEXT">
-            <Text data_type="DATA_TEMPERATURE_MIN" drawable_width="40" color_blue="43" color_red="240" font_type="F_ROBOTOCONDENSED_REGULAR_20" label="Reset days" alignment_type="CENTER" alpha="255" drawable_height="28" drawable_x="215" type="static" color_green="116" drawable_y="308" line_spacing="0"/>
+            <Text data_type="DATA_TEMPERATURE_MIN" drawable_width="40" color_blue="43" color_red="240" font_type="F_ROBOTOCONDENSED_REGULAR_20" label="Reset days" alignment_type="CENTER" alpha="255" drawable_height="28" drawable_x="216" type="static" color_green="116" drawable_y="278" line_spacing="0"/>
         </Widget>
     </TemplateWatch>
 </providers>

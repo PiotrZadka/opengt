@@ -20,12 +20,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 WATCHFACE_ROOT = PROJECT_ROOT / "watchfaces" / "OpenGT"
 RESOURCES = WATCHFACE_ROOT / "watchface" / "res"
 EXPORTS = WATCHFACE_ROOT / "export"
-ASSETS = WATCHFACE_ROOT / "assets"
 BASE_BINARY = WATCHFACE_ROOT / "base" / "OpenGT_0.1.0.bin"
 BINARY_OUTPUT = EXPORTS / "OpenGT.bin"
 PACKAGE_OUTPUT = EXPORTS / "OpenGT.hwt"
 
-VERSION = "0.7.2"
+VERSION = "0.8.1"
 SIZE = 454
 CENTER = SIZE // 2
 BACKGROUND = (2, 3, 3, 255)
@@ -39,6 +38,7 @@ BATTERY_TRACK = (39, 21, 10, 255)
 BATTERY_INNER_RADIUS = 188
 BATTERY_OUTER_RADIUS = RING_INNER_RADIUS
 FONT_BOLD = Path("/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf")
+FONT_REGULAR = WATCHFACE_ROOT / "fonts" / "RobotoCondensed-Regular.ttf"
 
 # Temperature identifiers are confirmed from compiled GT1 text controls. Current
 # temperature carries the ring decile, max carries the exact quota, and min carries
@@ -46,6 +46,7 @@ FONT_BOLD = Path("/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf"
 DATA_TEMPERATURE_MAX = 20
 DATA_TEMPERATURE_MIN = 21
 DATA_TEMPERATURE = 4
+DATA_POWER = 9
 DATA_POWER_RATIO = 163
 
 
@@ -59,6 +60,10 @@ def font(size: int) -> ImageFont.FreeTypeFont:
     return ImageFont.truetype(str(FONT_BOLD), size)
 
 
+def regular_font(size: int) -> ImageFont.FreeTypeFont:
+    return ImageFont.truetype(str(FONT_REGULAR), size)
+
+
 def draw_centered(
     draw: ImageDraw.ImageDraw,
     position: tuple[int, int],
@@ -67,6 +72,28 @@ def draw_centered(
     fill: tuple[int, int, int, int],
 ) -> None:
     draw.text(position, text, font=selected_font, fill=fill, anchor="mm")
+
+
+def draw_centered_on_baseline(
+    draw: ImageDraw.ImageDraw,
+    position: tuple[int, int],
+    text: str,
+    selected_font: ImageFont.FreeTypeFont,
+    fill: tuple[int, int, int, int],
+) -> None:
+    """Draw centered horizontally with a shared typographic baseline."""
+    draw.text(position, text, font=selected_font, fill=fill, anchor="ms")
+
+
+def draw_right_on_baseline(
+    draw: ImageDraw.ImageDraw,
+    position: tuple[int, int],
+    text: str,
+    selected_font: ImageFont.FreeTypeFont,
+    fill: tuple[int, int, int, int],
+) -> None:
+    """Draw right-aligned with a shared typographic baseline."""
+    draw.text(position, text, font=selected_font, fill=fill, anchor="rs")
 
 
 def polar_point(angle: float, radius: float) -> tuple[float, float]:
@@ -166,26 +193,28 @@ def background_image() -> Image.Image:
     image.alpha_composite(battery_ring_image(0))
     draw = ImageDraw.Draw(image)
 
-    # Quiet inner HUD geometry; progress controls paint over the dim tracks.
+    # Keep the center deliberately quiet; progress controls paint over the dim tracks.
     draw.ellipse((37, 37, 417, 417), outline=(26, 14, 8, 255), width=1)
-    draw.line((112, 194, 342, 194), fill=(92, 39, 14, 255), width=1)
-    draw.line((126, 321, 328, 321), fill=(92, 39, 14, 255), width=1)
-    draw.line((112, 194, 122, 184), fill=(145, 54, 10, 255), width=2)
-    draw.line((342, 194, 332, 184), fill=(145, 54, 10, 255), width=2)
-    draw.rectangle((125, 200, 329, 313), outline=(35, 21, 13, 255), width=1)
 
-    logo = Image.open(ASSETS / "shd-logo.png").convert("RGBA")
-    image.alpha_composite(logo, ((SIZE - logo.width) // 2, 39))
+    draw_centered_on_baseline(draw, (CENTER, 168), ":", font(54), ORANGE_LIGHT)
 
-    draw_centered(draw, (CENTER, 146), ":", font(54), ORANGE_LIGHT)
-    draw_centered(draw, (CENTER, 214), "CODEX", font(20), ORANGE)
-    draw_centered(draw, (253, 270), "%", font(22), ORANGE)
-    draw_centered(draw, (CENTER, 294), "LEFT", font(14), (211, 80, 12, 255))
-    draw_centered(draw, (196, 347), "RESET", font(15), (225, 88, 14, 255))
-    draw_centered(draw, (274, 347), "DAYS", font(15), (225, 88, 14, 255))
-
-    for x in (125, 329):
-        draw.line((x, 225, x, 285), fill=(72, 32, 13, 255), width=1)
+    # Every information row shares the exact Roboto Condensed typeface and baseline
+    # used by GT1's dynamic text renderer. Coordinates incorporate measurements from
+    # the physically installed 0.8.0 face.
+    draw_centered_on_baseline(draw, (156, 245), "CODEX", regular_font(18), ORANGE)
+    draw_centered_on_baseline(
+        draw, (288, 245), "% LEFT", regular_font(18), (211, 80, 12, 255)
+    )
+    draw_centered_on_baseline(
+        draw, (175, 306), "RESET IN", regular_font(18), (225, 88, 14, 255)
+    )
+    draw_centered_on_baseline(
+        draw, (284, 306), "DAYS", regular_font(18), (225, 88, 14, 255)
+    )
+    draw_centered_on_baseline(
+        draw, (199, 360), "BATTERY", regular_font(18), (225, 88, 14, 255)
+    )
+    draw_centered_on_baseline(draw, (283, 360), "%", regular_font(18), ORANGE)
     return image
 
 
@@ -229,7 +258,7 @@ def render_preview(
     image = background_image()
     image.alpha_composite(ring_image(quota_decile(remaining_percent) * 10))
     image.alpha_composite(battery_ring_image(battery_percent))
-    for x, character in zip((111, 165, 243, 297), displayed_time.replace(":", "")):
+    for x, character in zip((107, 161, 239, 293), displayed_time.replace(":", "")):
         if character < "0" or character > "9":
             raise ValueError(f"invalid preview time: {displayed_time}")
         digit = ord(character) - ord("0")
@@ -238,8 +267,15 @@ def render_preview(
             (x, 104),
         )
     draw = ImageDraw.Draw(image)
-    draw_centered(draw, (216, 252), str(remaining_percent), font(42), ORANGE)
-    draw_centered(draw, (235, 324), str(reset_days), font(22), (240, 116, 43, 255))
+    draw_centered_on_baseline(
+        draw, (222, 245), str(remaining_percent), regular_font(38), ORANGE
+    )
+    draw_centered_on_baseline(
+        draw, (236, 306), str(reset_days), regular_font(20), (240, 116, 43, 255)
+    )
+    draw_right_on_baseline(
+        draw, (275, 360), str(battery_percent), regular_font(20), ORANGE
+    )
     return image
 
 
@@ -300,6 +336,36 @@ def circle_progress_widget(
     )
 
 
+def text_widget(
+    *,
+    x: int,
+    y: int,
+    width: int,
+    height: int,
+    data_type: int,
+    font_type: int,
+    color: tuple[int, int, int, int],
+    alignment: int = 1,
+) -> bytes:
+    red, green, blue, alpha = color
+    text = (
+        protobuf_integer(1, x)
+        + protobuf_integer(2, y)
+        + protobuf_integer(3, width)
+        + protobuf_integer(4, height)
+        + protobuf_integer(5, red)
+        + protobuf_integer(6, green)
+        + protobuf_integer(7, blue)
+        + protobuf_integer(8, data_type)
+        + protobuf_integer(9, 0)
+        + protobuf_integer(10, alignment)
+        + protobuf_integer(11, font_type)
+        + protobuf_integer(12, alpha)
+    )
+    widget = protobuf_integer(1, 3) + protobuf_blob(5, text)
+    return protobuf_blob(1, widget)
+
+
 def selected_image_widget(data_type: int, resource_numbers: range) -> bytes:
     names = [f"{number:03}" for number in resource_numbers]
     images = b"".join(
@@ -323,8 +389,18 @@ def selected_image_widget(data_type: int, resource_numbers: range) -> bytes:
 
 def ring_widgets() -> bytes:
     quota = selected_image_widget(DATA_TEMPERATURE, range(12, 23))
-    battery = circle_progress_widget(23, DATA_POWER_RATIO, 192, 7)
-    return quota + battery
+    battery_ring = circle_progress_widget(23, DATA_POWER_RATIO, 192, 7)
+    battery_text = text_widget(
+        x=239,
+        y=340,
+        width=36,
+        height=20,
+        data_type=DATA_POWER,
+        font_type=134,
+        color=ORANGE,
+        alignment=2,
+    )
+    return quota + battery_ring + battery_text
 
 
 def _read_varint(payload: bytes, position: int) -> tuple[int, int]:
@@ -359,31 +435,37 @@ def patch_protobuf(payload: bytes) -> bytes:
         "08a70110d50118782032283a30dc0138eb01400448005001588b0160ff01"
     )
     new_quota = bytes.fromhex(
-        "08a30110e6011869203c28ff013069389200401448005001588b0160ff01"
+        "08b40110b9011854203c28ff013069389200401448005001588b0160ff01"
     )
     old_days = bytes.fromhex(
         "08cf0110d2021836201a28f00130f40138f80140144800500158860160ff01"
     )
     new_days = bytes.fromhex(
-        "08d70110b4021828201c28f00130f40038ab0040154800500158860160ff01"
+        "08d8011096021828201c28f00130f40038ab0040154800500158860160ff01"
     )
     if payload.count(old_quota) != 1 or payload.count(old_days) != 1:
         raise ValueError("base watchface text layout did not match the known GT1 payload")
     payload = payload.replace(old_quota, new_quota).replace(old_days, new_days)
 
-    for x_position, data_type in ((111, 59), (165, 60), (243, 61), (297, 62)):
+    digit_positions = (
+        (111, 107, 59),
+        (165, 161, 60),
+        (243, 239, 61),
+        (297, 293, 62),
+    )
+    for old_x, new_x, data_type in digit_positions:
         old_position = (
-            protobuf_integer(1, x_position)
+            protobuf_integer(1, old_x)
             + protobuf_integer(2, 54)
             + protobuf_integer(3, data_type)
         )
         new_position = (
-            protobuf_integer(1, x_position)
+            protobuf_integer(1, new_x)
             + protobuf_integer(2, 104)
             + protobuf_integer(3, data_type)
         )
         if payload.count(old_position) != 1:
-            raise ValueError(f"base watchface digit at x={x_position} was not found")
+            raise ValueError(f"base watchface digit at x={old_x} was not found")
         payload = payload.replace(old_position, new_position)
     return payload
 
