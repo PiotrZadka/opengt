@@ -1,0 +1,5 @@
+Roboto Condensed Regular
+Copyright Google 2014
+Version 2.000980; 2014
+Licensed under the Apache License, Version 2.0.
+Upstream: https://github.com/google/fonts

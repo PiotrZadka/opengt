@@ -8,12 +8,15 @@ OpenGT currently turns a stock-format GT1 watchface into a Codex quota desk comp
 - exact weekly Codex quota remaining;
 - a 10%-step quota bezel;
 - reset countdown in days;
-- a native, thin battery ring;
+- a native, thin battery ring and numeric battery percentage;
 - current time;
 - updates through Gadgetbridge without reinstalling the face, while the local sync process
   is running.
 
-![OpenGT watchface preview](watchfaces/OpenGT/preview/cover.jpg)
+![OpenGT running on FTN-B19](watchfaces/OpenGT/preview/on-watch.jpg)
+
+_Physical OpenGT 0.8.0 validation photo. The current build additionally corrects the
+measured text baselines and adds numeric battery percentage._
 
 ## Current status
 
@@ -32,7 +35,7 @@ OpenGT.hwt on FTN-B19
 ```
 
 Gadgetbridge 0.92.2 pairs with the watch, installs and activates the custom HWT, and
-updates its bound fields without another watchface upload. The current build is **0.8.0**.
+updates its bound fields without another watchface upload. The current build is **0.8.1**.
 
 The GT1 renderer has no custom variable API. OpenGT deliberately reuses three stock
 weather values:
@@ -44,8 +47,9 @@ weather values:
 | minimum temperature | days until quota reset |
 
 The quota ring is therefore quantized to the nearest 10%, while the numeric percentage is
-exact. The battery ring uses the watch's native battery ratio and does not depend on the
-phone. This prototype replaces genuine weather values while active.
+exact. The battery ring and numeric battery percentage use the watch's native power data
+and do not depend on the phone. This prototype replaces genuine weather values while
+active.
 
 ## Runtime model and limitations
 
@@ -81,7 +85,8 @@ the tested path.
 - Python 3.9 or newer;
 - DejaVu Sans Condensed Bold at
   `/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf` (`ttf-dejavu` on
-  Arch/CachyOS or `fonts-dejavu-core` on Debian/Ubuntu);
+  Arch/CachyOS or `fonts-dejavu-core` on Debian/Ubuntu); OpenGT bundles the matching
+  Roboto Condensed face used by GT1 for its smaller dynamic text;
 - Android Debug Bridge (`adb`);
 - [Codex CLI](https://developers.openai.com/codex/cli) authenticated with a ChatGPT account
   that has Codex access;
