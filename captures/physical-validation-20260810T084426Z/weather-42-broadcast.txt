@@ -1,0 +1,6 @@
+host_utc=2026-08-10T08:49:06Z
+package=nodomain.freeyourgadget.gadgetbridge
+weather_json={"timestamp":1786351746,"location":"OpenGT test","currentTemp":315,"todayMinTemp":315,"todayMaxTemp":315,"currentCondition":"clear","currentConditionCode":800,"currentHumidity":50,"windSpeed":0,"windDirection":0}
+broadcast_result:
+Broadcasting: Intent { act=nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER flg=0x400000 pkg=nodomain.freeyourgadget.gadgetbridge (has extras) }
+Broadcast completed: result=0

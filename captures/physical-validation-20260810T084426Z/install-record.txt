@@ -1,0 +1,16 @@
+Captured UTC: 2026-08-10T08:44:26Z
+Gadgetbridge package: nodomain.freeyourgadget.gadgetbridge
+Gadgetbridge version: 0.92.2 (versionCode 251)
+Artifact: /sdcard/Download/Shiyong_2.1.1.hwt
+Artifact SHA-256: 35c249020be3977eed8c5b63c77c0eeb0c2a0435db3ce8a174f88b7778840003
+
+Relevant Gadgetbridge logcat:
+08-10 09:42:05.278 D/FileInstallerViewModel: Found compatible install handler HuaweiInstallHandler for initialized HUAWEI WATCH GT
+08-10 09:42:05.355 D/HuaweiInstallHandler: Initialized HuaweiInstallHandler: Watchface
+08-10 09:43:22.188 I/GBDevice: Mark device as busy: Uploading watchface…
+08-10 09:43:58.041 I/GBDevice: Mark device as NOT busy anymore: Uploading watchface…
+08-10 09:43:58.043 D/BtLEQueue: Transaction for SendWatchfaceConfirm
+08-10 09:43:58.044 D/BtLEQueue: Transaction for SendWatchfaceOperation
+08-10 09:43:58.132 D/ResponseManager: Service 27 command 3 handled by SendWatchfaceOperation
+
+Physical observation supplied by user: Shiyong 2.1.1 visibly loaded on the watch after one install.

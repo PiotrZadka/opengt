@@ -1,68 +1,127 @@
 # OpenGT
 
-Software-only reverse engineering and experimentation with the first-generation HUAWEI
+Open companion and stock-watchface experimentation for the first-generation HUAWEI
 WATCH GT (FTN-B19, platform codename **Fortuna**).
 
-This is a hobby research project exploring how much of an old watch can be understood,
-customized, and used with an open companion instead of Huawei Health. Custom watchfaces
-and documented stock features are the near-term focus; richer displays or native custom
-applications are unproven stretch goals. Opening the watch and hardware debug probing are
-intentionally out of scope.
+OpenGT currently turns a stock-format GT1 watchface into a Codex quota desk companion:
 
-## Current state
+- exact weekly Codex quota remaining;
+- a 10%-step quota bezel;
+- reset countdown in days;
+- a native, thin battery ring;
+- current time;
+- automatic updates through Gadgetbridge without reinstalling the face.
 
-- Read-only BLE scan and GATT observation are implemented.
-- The LPv2 frame/TLV/slicing codec is implemented and tested offline.
-- Public Huawei/Gadgetbridge protocol, OTA, firmware-source, hardware, and boot-chain
-  evidence is documented.
-- No verified public FTN-B19 firmware image or native-code execution path is known.
-- No active pairing, notification, weather, or watchface experiment has been run by this
-  repository yet.
+![OpenGT watchface preview](watchfaces/OpenGT/preview/cover.jpg)
 
-## Direction
+## Current status
+
+The complete path has been physically validated on the project watch:
 
 ```text
-optional local/external data
-             |
-     open phone companion
-             |
-         BLE / LPv2
-             |
-      HUAWEI WATCH GT
+Codex app-server
+      |
+scripts/opengt-sync
+      |
+ADB -> Gadgetbridge generic weather integration
+      |
+Huawei LPv2 / stock weather service
+      |
+OpenGT.hwt on FTN-B19
 ```
 
-The staged plan is:
+Gadgetbridge 0.92.2 pairs with the watch, installs and activates the custom HWT, and
+updates its bound fields without another watchface upload. The current build is **0.7.2**.
 
-1. validate first-generation Watch GT pairing with an open companion;
-2. confirm documented stock operations such as notifications and weather;
-3. install a reversible stock-format custom watchface;
-4. experiment with user-defined data through supported stock surfaces;
-5. assess whether anything richer is technically possible.
+The GT1 renderer has no custom variable API. OpenGT deliberately reuses three stock
+weather values:
 
-See [the software-only roadmap](research/software-only-roadmap.md) for feasibility,
-architecture, evidence levels, and safety gates.
+| Weather value | OpenGT meaning |
+| --- | --- |
+| current temperature | quota decile `0..10`, selecting one of 11 bezel images |
+| maximum temperature | exact quota percentage shown as text |
+| minimum temperature | days until quota reset |
 
-## Safety and scope
+The quota ring is therefore quantized to the nearest 10%, while the numeric percentage is
+exact. The battery ring uses the watch's native battery ratio and does not depend on the
+phone. This prototype replaces genuine weather values while active.
 
-The watch is a throwaway software research unit, but operations are still staged. Ordinary,
-well-understood pairing, capability, notification, weather, and stock watchface operations
-are in scope. OTA, flashing, fuzzing, malformed payloads, exploit testing, and native-code
-execution require a separate explicit decision. Hardware opening/probing is out of scope.
+## Install
 
-Read [AGENTS.md](AGENTS.md) before working on the live device.
+Requirements:
 
-## Read-only observer
+- Python 3.9+;
+- an authenticated `codex` CLI using ChatGPT/Codex credentials;
+- Android Debug Bridge (`adb`);
+- Gadgetbridge paired and connected to the watch.
 
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-
-PYTHONPATH=src .venv/bin/python scripts/ble_observe.py --scan-seconds 20
-PYTHONPATH=src .venv/bin/python scripts/ble_observe.py --scan-seconds 30 --connect
 ```
 
-The current observer writes no Huawei application packets. Public captures are sanitized;
-raw neighborhood scans remain local.
+Build the watchface:
+
+```sh
+PYTHONPATH=src .venv/bin/python scripts/build_opengt_watchface.py
+```
+
+The stable outputs are:
+
+```text
+watchfaces/OpenGT/export/OpenGT.bin
+watchfaces/OpenGT/export/OpenGT.hwt
+```
+
+Copy `OpenGT.hwt` to the phone, open it with Gadgetbridge's FW/App installer, verify that
+it is identified as an `HWHD02` 454×454 watchface, and install it.
+
+The builder starts from `watchfaces/OpenGT/base/OpenGT_0.1.0.bin`, a minimal GT1 payload
+previously exported by Huawei WatchFace Designer. Subsequent layout, resources, bindings,
+and packaging are generated locally by `src/opengt_watchface/builder.py`.
+
+## Synchronize Codex quota
+
+For a USB-connected phone, set `ANDROID_SERIAL` when more than one ADB device is present:
+
+```sh
+ANDROID_SERIAL=<adb-serial> ./scripts/opengt-sync
+```
+
+For wireless ADB, store the selected endpoint once:
+
+```sh
+mkdir -p ~/.config/opengt
+printf '%s\n' '<phone-ip>:5555' > ~/.config/opengt/adb-serial
+adb connect "$(cat ~/.config/opengt/adb-serial)"
+./scripts/opengt-sync
+```
+
+Continuous foreground synchronization is also available:
+
+```sh
+./scripts/opengt-sync --watch --interval 300
+```
+
+The synchronizer reads the authenticated Codex app-server RPC
+`account/rateLimits/read`, selects the exact seven-day Codex window, and sends only the
+three documented weather values through Gadgetbridge. It does not read or copy Codex
+authentication tokens and does not expose arbitrary BLE writes.
+
+## Passive BLE tooling
+
+The original observer remains read-only:
+
+```sh
+PYTHONPATH=src .venv/bin/python scripts/ble_observe.py --scan-seconds 20
+PYTHONPATH=src .venv/bin/python scripts/ble_observe.py --scan-seconds 30 --connect
+PYTHONPATH=src .venv/bin/python scripts/ble_observe.py \
+  --scan-seconds 30 --connect \
+  --subscribe-notifications --notification-seconds 20
+```
+
+It scans with Bleak/CoreBluetooth, reads GATT characteristics, and can subscribe to FE02.
+It never writes Huawei application packets.
 
 ## Tests
 
@@ -70,16 +129,35 @@ raw neighborhood scans remain local.
 PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -v
 ```
 
-## Research index
+The suite covers the LPv2 codec, watchface geometry, GT1 data bindings, generated payload,
+and HWT structure.
 
+## Repository map
+
+- `watchfaces/OpenGT/` — source assets, GT1 payload seed, previews, and current build.
+- `src/opengt_watchface/` — reproducible OpenGT watchface builder.
+- `scripts/opengt-sync` — Codex-to-Gadgetbridge synchronization.
+- `src/huawei_lpv2/` — offline LPv2 framing/TLV/slicing codec.
+- `scripts/ble_observe.py` — passive BLE/GATT observer.
+- `captures/` — reviewed physical-validation and GATT evidence.
+- `research/` — source-backed protocol, firmware, OTA, and security findings.
+
+## Research
+
+- [Codex watchface feasibility and physical gate](research/codex-watchface-feasibility.md)
 - [Custom firmware gap analysis](research/ftn-b19-custom-firmware-gap-analysis.md)
 - [Firmware sources and OTA server](research/ftn-b19-firmware-sources-and-ota-server.md)
 - [Huawei UUID and LPv2 protocol research](research/huawei-uuid-protocol.md)
 - [Hardware and BLE baseline](docs/hardware-and-ble-baseline.md)
 - [LPv2 codec notes](docs/lpv2-codec.md)
 
-## Project status
+## Safety and scope
 
-Research project; expect incomplete model-specific behavior and explicit UNKNOWN findings.
-There is no claim that arbitrary live graphics, native applications, or custom firmware are
-currently possible. No license has been selected yet.
+Ordinary pairing, notification/weather synchronization, passive observation, and
+stock-format watchface operations are in scope. OTA, flashing, malformed payloads,
+fuzzing, exploit work, and persistent modification require a separate explicit decision.
+Opening or electrically probing the watch is out of scope.
+
+See [AGENTS.md](AGENTS.md) before live-device or firmware work.
+
+No license has been selected yet.
